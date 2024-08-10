@@ -9,6 +9,7 @@
   packages = [
     pkgs.git
     pkgs.sqlx-cli
+    pkgs.cargo-edit
   ] ++ lib.optionals pkgs.stdenv.isDarwin (with pkgs.darwin.apple_sdk; [
     frameworks.SystemConfiguration
   ]);

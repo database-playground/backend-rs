@@ -4,10 +4,18 @@ cargo-features = ["edition2024"]
 name = "backend"
 version = "0.1.0"
 edition = "2024"
+default-run = "backend"
 
 [dependencies]
 anyhow = "1.0.86"
+async-graphql = "7.0.7"
+async-graphql-poem = "7.0.7"
 include_dir = { version = "0.7.4", features = ["nightly"] }
-sqlx = { version = "0.8", features = [ "runtime-tokio", "tls-rustls", "postgres" ] }
+poem = "3.0.4"
+sqlx = { version = "0.8", features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+] }
 tokio = { version = "1.39.2", features = ["full"] }
 tracing = "0.1.40"
