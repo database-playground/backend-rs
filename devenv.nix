@@ -34,7 +34,11 @@
   '';
 
   # https://devenv.sh/pre-commit-hooks/
-  # pre-commit.hooks.shellcheck.enable = true;
+  pre-commit.hooks = {
+    shellcheck.enable = true;
+    rustfmt.enable = true;
+    clippy.enable = true;
+  };
 
   # See full reference at https://devenv.sh/reference/options/
 }
