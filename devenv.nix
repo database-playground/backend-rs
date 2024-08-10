@@ -3,9 +3,15 @@
 {
   # https://devenv.sh/basics/
   env.GREET = "devenv";
+  env.DATABASE_URL = "postgres://postgres:postgres@localhost:5432/postgres";
 
   # https://devenv.sh/packages/
-  packages = [ pkgs.git ];
+  packages = [
+    pkgs.git
+    pkgs.sqlx-cli
+  ] ++ lib.optionals pkgs.stdenv.isDarwin (with pkgs.darwin.apple_sdk; [
+    frameworks.SystemConfiguration
+  ]);
 
   # https://devenv.sh/languages/
   languages.rust.enable = true;
@@ -15,7 +21,11 @@
   # processes.cargo-watch.exec = "cargo-watch";
 
   # https://devenv.sh/services/
-  # services.postgres.enable = true;
+  services.postgres.enable = true;
+  services.postgres.listen_addresses = "127.0.0.1";
+  services.postgres.initialScript = ''
+    CREATE ROLE postgres SUPERUSER LOGIN PASSWORD 'postgres';
+  '';
 
   # https://devenv.sh/scripts/
   scripts.hello.exec = ''
