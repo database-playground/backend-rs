@@ -2,9 +2,14 @@ cargo-features = ["edition2024"]
 
 [package]
 name = "backend"
+description = "The backend of Database Playground."
+license-file = "LICENSE"
+readme = "README.md"
+repository = "https://github.com/database-playground/dbrunner-rs"
 version = "0.1.0"
 edition = "2024"
 default-run = "backend"
+publish = false
 
 [dependencies]
 anyhow = "1.0.86"
@@ -17,5 +22,8 @@ sqlx = { version = "0.8", features = [
     "tls-rustls",
     "postgres",
 ] }
-tokio = { version = "1.39.2", features = ["full"] }
+tokio = { version = "1.39.3", features = ["full"] }
 tracing = "0.1.40"
+
+[profile.release]
+lto = "thin"

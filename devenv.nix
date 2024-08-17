@@ -1,4 +1,10 @@
-{ pkgs, lib, config, inputs, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  inputs,
+  ...
+}:
 
 {
   # https://devenv.sh/basics/
@@ -6,13 +12,16 @@
   env.DATABASE_URL = "postgres://postgres:postgres@localhost:5432/postgres";
 
   # https://devenv.sh/packages/
-  packages = [
-    pkgs.git
-    pkgs.sqlx-cli
-    pkgs.cargo-edit
-  ] ++ lib.optionals pkgs.stdenv.isDarwin (with pkgs.darwin.apple_sdk; [
-    frameworks.SystemConfiguration
-  ]);
+  packages =
+    [
+      pkgs.git
+      pkgs.sqlx-cli
+      pkgs.cargo-edit
+      pkgs.cargo-nextest
+    ]
+    ++ lib.optionals pkgs.stdenv.isDarwin (
+      with pkgs.darwin.apple_sdk; [ frameworks.SystemConfiguration ]
+    );
 
   # https://devenv.sh/languages/
   languages.rust.enable = true;
