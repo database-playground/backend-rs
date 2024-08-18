@@ -1,11 +1,16 @@
-use async_graphql::*;
+//! GraphQL schemas.
 
-pub struct Query;
+pub mod error;
+pub mod schema;
 
-#[Object]
+use async_graphql::MergedObject;
+
+#[derive(MergedObject)]
+pub struct Query(schema::SchemaQuery);
+
 impl Query {
-    /// Returns the sum of a and b
-    async fn add(&self, a: i32, b: i32) -> i32 {
-        a + b
+    pub async fn new_with_pool() -> Result<Self, anyhow::Error> {
+        let pool = crate::db::pool().await?;
+        Ok(Self(schema::SchemaQuery::new(pool)))
     }
 }

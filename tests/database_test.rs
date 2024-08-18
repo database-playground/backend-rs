@@ -18,7 +18,7 @@ mod tests {
         .await
         .expect("failed to get schema");
 
-        assert_eq!(schema.id, "shop");
+        assert_eq!(schema.schema_id, "shop");
         assert_eq!(schema.picture, None);
         assert_eq!(schema.description, "The schema that is for a shop");
 

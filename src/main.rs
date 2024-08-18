@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
 use async_graphql_poem::*;
 use backend::gql;
@@ -11,9 +9,10 @@ async fn graphiql() -> impl IntoResponse {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), anyhow::Error> {
     // create the schema
-    let schema = Schema::build(gql::Query, EmptyMutation, EmptySubscription).finish();
+    let query = gql::Query::new_with_pool().await?;
+    let schema = Schema::build(query, EmptyMutation, EmptySubscription).finish();
 
     // start the http server
     let app = Route::new().at("/", get(graphiql).post(GraphQL::new(schema)));
