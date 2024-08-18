@@ -1,4 +1,4 @@
-use async_graphql::{Object, Result, SimpleObject};
+use async_graphql::{ComplexObject, Context, Object, Result, SimpleObject};
 use chrono::Utc;
 use sqlx::{Pool, Postgres};
 
@@ -6,28 +6,26 @@ use crate::db;
 
 use super::error;
 
-pub struct SchemaQuery {
-    pub db_pool: Pool<Postgres>,
-}
+pub struct SchemaQuery;
 
-impl SchemaQuery {
-    pub fn new(pool: Pool<Postgres>) -> Self {
-        Self { db_pool: pool }
-    }
-}
+impl SchemaQuery {}
 
 #[Object]
 impl SchemaQuery {
-    #[tracing::instrument(skip(self))]
-    async fn schema(&self, id: String) -> Result<Schema> {
-        let reply = db::get_schema(&self.db_pool, &id)
+    #[tracing::instrument(skip(self, ctx))]
+    async fn schema<'ctx>(&self, ctx: &Context<'ctx>, id: String) -> Result<Schema> {
+        tracing::debug!("Running GraphQL query 'schema'");
+        let pool = ctx.data::<Pool<Postgres>>()?;
+
+        db::get_schema(pool, &id)
             .await
-            .map_err(error::Error::from)?;
-        Ok(reply.into())
+            .map(Into::into)
+            .map_err(error::gqlize)
     }
 }
 
 #[derive(Debug, SimpleObject)]
+#[graphql(complex)]
 pub struct Schema {
     pub id: String,
     pub picture: Option<String>,
@@ -45,5 +43,18 @@ impl From<db::Schema> for Schema {
             created_at: schema.created_at,
             updated_at: schema.updated_at,
         }
+    }
+}
+
+#[ComplexObject]
+impl Schema {
+    #[tracing::instrument(skip(self, ctx))]
+    async fn initial_sql<'ctx>(&self, ctx: &Context<'ctx>) -> Result<String> {
+        tracing::debug!("Running GraphQL query 'schema.initial_sql'");
+        let pool = ctx.data::<Pool<Postgres>>()?;
+
+        db::get_schema_initial_sql(pool, &self.id)
+            .await
+            .map_err(error::gqlize)
     }
 }

@@ -18,6 +18,8 @@ pub async fn get_schema(
     conn: impl Executor<'_, Database = Postgres>,
     schema_id: &str,
 ) -> Result<Schema, Error> {
+    tracing::debug!("Getting schema from database");
+
     sqlx::query_as!(
         Schema,
         r#"
@@ -43,6 +45,8 @@ pub async fn get_schema_initial_sql(
     conn: impl Executor<'_, Database = Postgres>,
     schema_id: &str,
 ) -> Result<String, Error> {
+    tracing::debug!("Getting schema initial SQL from database");
+
     sqlx::query!(
         r#"
         SELECT initial_sql

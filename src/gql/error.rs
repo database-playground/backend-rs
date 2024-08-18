@@ -62,3 +62,7 @@ impl From<db::Error> for Error {
         }
     }
 }
+
+pub fn gqlize<E: Into<Error>>(e: E) -> async_graphql::Error {
+    async_graphql::Error::from(e.into())
+}
