@@ -1,4 +1,6 @@
-use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
+use async_graphql::{
+    extensions::Tracing, http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema,
+};
 use async_graphql_poem::*;
 use backend::gql;
 use poem::{listener::TcpListener, web::Html, *};
@@ -19,6 +21,7 @@ async fn main() -> Result<(), anyhow::Error> {
         EmptySubscription,
     )
     .data(backend::db::pool().await?)
+    .extension(Tracing)
     .finish();
 
     // start the http server
