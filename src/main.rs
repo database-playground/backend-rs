@@ -10,6 +10,8 @@ async fn graphiql() -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
+    tracing_subscriber::fmt::init();
+
     // create the schema
     let query = gql::Query::new_with_pool().await?;
     let schema = Schema::build(query, EmptyMutation, EmptySubscription).finish();

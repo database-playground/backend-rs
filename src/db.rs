@@ -10,7 +10,6 @@ pub use schema::{get_schema, get_schema_initial_sql, Schema};
 pub async fn pool() -> Result<sqlx::Pool<sqlx::Postgres>, Error> {
     let db_url = std::env::var("DATABASE_URL").map_err(|_| Error::MissingDatabaseUrl)?;
     Ok(sqlx::postgres::PgPoolOptions::new()
-        .max_connections(8)
         .connect(&db_url)
         .await?)
 }
