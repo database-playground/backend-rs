@@ -12,12 +12,17 @@ default-run = "backend"
 publish = false
 
 [dependencies]
+async-graphql = { version = "7.0.7", features = [
+    "chrono",
+    "graphiql",
+    "tracing",
+    "tempfile",
+], default-features = false }
 anyhow = "1.0.86"
-async-graphql = { version = "7.0.7", features = ["chrono"] }
 async-graphql-poem = "7.0.7"
-chrono = { version = "0.4.38", features = ["serde"] }
+chrono = { version = "0.4.38", features = ["std"], default-features = false }
 ecow = "0.2.2"
-include_dir = { version = "0.7.4", features = ["nightly"] }
+include_dir = { version = "0.7.4", features = ["nightly"], optional = true }
 poem = "3.0.4"
 serde = { version = "1.0.208", features = ["derive"] }
 sqlx = { version = "0.8", features = [
@@ -27,9 +32,9 @@ sqlx = { version = "0.8", features = [
     "chrono",
 ] }
 thiserror = "1.0.63"
-tokio = { version = "1.39.3", features = ["full"] }
+tokio = { version = "1.39.3", features = ["rt-multi-thread", "macros"] }
 tracing = "0.1.40"
-tracing-subscriber = "0.3.18"
+tracing-subscriber = { version = "0.3.18", features = ["chrono"] }
 
 [profile.release]
 lto = "thin"
@@ -41,7 +46,7 @@ opt-level = 3
 # Run the integration tests related to PostgreSQL.
 test_database = ["seeder"]
 # Build the seeder.
-seeder = []
+seeder = ["dep:include_dir"]
 
 [dev-dependencies]
 uuid = { version = "1.10.0", features = ["v4"] }
