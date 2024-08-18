@@ -12,7 +12,6 @@ impl SchemaQuery {}
 
 #[Object]
 impl SchemaQuery {
-    #[tracing::instrument(skip(self, ctx))]
     async fn schema<'ctx>(&self, ctx: &Context<'ctx>, id: String) -> Result<Schema> {
         tracing::debug!("Running GraphQL query 'schema'");
         let pool = ctx.data::<Pool<Postgres>>()?;
@@ -48,7 +47,6 @@ impl From<db::Schema> for Schema {
 
 #[ComplexObject]
 impl Schema {
-    #[tracing::instrument(skip(self, ctx))]
     async fn initial_sql<'ctx>(&self, ctx: &Context<'ctx>) -> Result<String> {
         tracing::debug!("Running GraphQL query 'schema.initial_sql'");
         let pool = ctx.data::<Pool<Postgres>>()?;
