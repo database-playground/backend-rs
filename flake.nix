@@ -20,6 +20,7 @@
     utils.lib.eachDefaultSystem (
       system:
       let
+        lib = nixpkgs.lib;
         pkgs = nixpkgs.legacyPackages.${system};
         fenix' = pkgs.callPackage fenix { };
         rustPlatform = pkgs.makeRustPlatform {
@@ -34,6 +35,11 @@
             lockFile = ./Cargo.lock;
             allowBuiltinFetchGit = true;
           };
+
+          buildInputs = lib.optionals pkgs.stdenv.isDarwin (
+            with pkgs.darwin.apple_sdk; [ frameworks.SystemConfiguration ]
+          );
+
           useNextest = true;
           # unknown variant `2024`, expected one of `2015`, `2018`, `2021`
           auditable = false;
