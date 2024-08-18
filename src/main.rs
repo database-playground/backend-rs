@@ -1,9 +1,8 @@
-pub mod gql;
-
 use std::error::Error;
 
-use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Object, Schema};
+use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
 use async_graphql_poem::*;
+use backend::gql;
 use poem::{listener::TcpListener, web::Html, *};
 
 #[handler]

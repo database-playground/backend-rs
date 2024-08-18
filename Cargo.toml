@@ -21,9 +21,23 @@ sqlx = { version = "0.8", features = [
     "runtime-tokio",
     "tls-rustls",
     "postgres",
+    "time",
 ] }
+thiserror = "1.0.63"
 tokio = { version = "1.39.3", features = ["full"] }
 tracing = "0.1.40"
 
 [profile.release]
 lto = "thin"
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3
+
+[features]
+# Run the integration tests related to PostgreSQL.
+test_database = ["seeder"]
+# Build the seeder.
+seeder = []
+
+[dev-dependencies]
+uuid = { version = "1.10.0", features = ["v4"] }
