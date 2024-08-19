@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT schema_id, picture, description, created_at, updated_at\n        FROM dp_schemas\n        WHERE schema_id = $1;\n        ",
+  "query": "\n        SELECT schema_id, picture, description, created_at, updated_at\n        FROM dp_schemas\n        WHERE schema_id = $1 AND deleted_at IS NULL;\n        ",
   "describe": {
     "columns": [
       {
@@ -42,5 +42,5 @@
       false
     ]
   },
-  "hash": "8ca352623d97c97d5e35fb6430f3d7e4c5722943b7fca0d61acb3838da8480b1"
+  "hash": "7d6ae45e5874721b4080a54d264507b9e4de39f95f7e495e8864ff217be395a2"
 }

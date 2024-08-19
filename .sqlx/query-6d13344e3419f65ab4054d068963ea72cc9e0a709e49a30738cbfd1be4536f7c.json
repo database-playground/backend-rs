@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT initial_sql\n        FROM dp_schemas\n        WHERE schema_id = $1;\n        ",
+  "query": "\n        SELECT initial_sql\n        FROM dp_schemas\n        WHERE schema_id = $1 AND deleted_at IS NULL;\n        ",
   "describe": {
     "columns": [
       {
@@ -18,5 +18,5 @@
       false
     ]
   },
-  "hash": "13435620fcfbfbc57c09613749974ea2d08cecbc3211d6b92d5409b17e9284b2"
+  "hash": "6d13344e3419f65ab4054d068963ea72cc9e0a709e49a30738cbfd1be4536f7c"
 }

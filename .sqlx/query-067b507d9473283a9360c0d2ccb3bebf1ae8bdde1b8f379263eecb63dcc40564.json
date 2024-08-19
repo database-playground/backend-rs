@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT question_id, schema_id, type AS question_type, difficulty AS \"difficulty: _\", title, description, created_at, updated_at\n        FROM dp_questions\n        WHERE deleted_at IS NULL\n        ORDER BY question_id\n        LIMIT $1 OFFSET $2;\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "question_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "schema_id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "question_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "difficulty: _",
+        "type_info": {
+          "Custom": {
+            "name": "dp_difficulty",
+            "kind": {
+              "Enum": [
+                "easy",
+                "medium",
+                "hard"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "067b507d9473283a9360c0d2ccb3bebf1ae8bdde1b8f379263eecb63dcc40564"
+}
