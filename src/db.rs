@@ -1,6 +1,6 @@
 //! Operate with the database and the models.
 
-#[cfg(any(feature = "seeder"))]
+#[cfg(feature = "seeder")]
 pub mod seeder;
 
 pub mod cursor;
