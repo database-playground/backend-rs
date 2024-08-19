@@ -3,6 +3,12 @@
 #[cfg(any(feature = "seeder"))]
 pub mod seeder;
 
+pub mod cursor;
+pub use cursor::Cursor;
+pub mod question;
+pub use question::{
+    get_question, get_question_answer, get_question_solution, list_questions, Difficulty, Question,
+};
 pub mod schema;
 pub use schema::{get_schema, get_schema_initial_sql, Schema};
 
@@ -27,4 +33,7 @@ pub enum Error {
         entity: &'static str,
         id: ecow::EcoString,
     },
+
+    #[error("id must be a positive integer")]
+    NotPositiveID,
 }
