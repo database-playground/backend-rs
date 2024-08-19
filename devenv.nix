@@ -58,6 +58,16 @@
     shellcheck.enable = true;
     rustfmt.enable = true;
     clippy.enable = true;
+
+    sqlx-prepare = {
+      enable = true;
+      name = "Run sqlx prepare";
+
+      entry = "cargo sqlx prepare";
+      types = [ "rust" ];
+
+      pass_filenames = false;
+    };
   };
 
   # See full reference at https://devenv.sh/reference/options/
