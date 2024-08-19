@@ -25,7 +25,7 @@ pub async fn get_schema(
         r#"
         SELECT schema_id, picture, description, created_at, updated_at
         FROM dp_schemas
-        WHERE schema_id = $1;
+        WHERE schema_id = $1 AND deleted_at IS NULL;
         "#,
         schema_id
     )
@@ -51,7 +51,7 @@ pub async fn get_schema_initial_sql(
         r#"
         SELECT initial_sql
         FROM dp_schemas
-        WHERE schema_id = $1;
+        WHERE schema_id = $1 AND deleted_at IS NULL;
         "#,
         schema_id
     )

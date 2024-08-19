@@ -1,10 +1,12 @@
-#![feature(async_closure)]
+#![feature(async_closure, assert_matches)]
 
 mod common;
 
 #[cfg(all(test, feature = "test_database"))]
 mod tests {
-    use backend;
+    use std::assert_matches::assert_matches;
+
+    use backend::{self, db};
     use tokio;
 
     #[tokio::test]
@@ -42,5 +44,47 @@ mod tests {
         );
 
         println!("{initial_sql}");
+    }
+
+    #[tokio::test]
+    async fn test_get_schema_deleted() {
+        let schema = crate::common::run_onetime(async |c| {
+            backend::db::seeder::seed_connection(c).await?;
+
+            let result = backend::db::get_schema(c, "deleted_schema").await?;
+            Ok(result)
+        })
+        .await
+        .map_err(|e| e.downcast::<db::Error>().expect("failed to downcast error"));
+
+        assert_matches!(
+            schema,
+            Err(db::Error::NotFound {
+                entity,
+                id,
+            }) if entity == "schema" && id == "deleted_schema",
+            "schema should not be found"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_get_schema_initial_sql_deleted() {
+        let initial_sql = crate::common::run_onetime(async |c| {
+            backend::db::seeder::seed_connection(c).await?;
+
+            let result = backend::db::get_schema_initial_sql(c, "deleted_schema").await?;
+            Ok(result)
+        })
+        .await
+        .map_err(|e| e.downcast::<db::Error>().expect("failed to downcast error"));
+
+        assert_matches!(
+            initial_sql,
+            Err(db::Error::NotFound {
+                entity,
+                id,
+            }) if entity == "schema" && id == "deleted_schema",
+            "schema initial sql should not be found"
+        );
     }
 }
