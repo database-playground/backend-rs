@@ -1,4 +1,16 @@
 {
   "editor.formatOnSave": true,
-  "rust-analyzer.cargo.features": ["test_database"]
+  "rust-analyzer.cargo.features": ["test_database"],
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5432,
+      "driver": "PostgreSQL",
+      "password": "postgres",
+      "username": "postgres",
+      "database": "postgres",
+      "name": "backend"
+    }
+  ]
 }
