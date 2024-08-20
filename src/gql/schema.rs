@@ -1,6 +1,5 @@
 use async_graphql::{ComplexObject, Context, Object, Result, SimpleObject};
 use chrono::Utc;
-use sqlx::{Pool, Postgres};
 
 use crate::db;
 
@@ -14,7 +13,7 @@ impl SchemaQuery {}
 impl SchemaQuery {
     async fn schema<'ctx>(&self, ctx: &Context<'ctx>, id: String) -> Result<Schema> {
         tracing::debug!("Running GraphQL query 'schema'");
-        let pool = ctx.data::<Pool<Postgres>>()?;
+        let pool = ctx.data::<db::Pool>()?;
 
         db::get_schema(pool, &id)
             .await
@@ -49,7 +48,7 @@ impl From<db::Schema> for Schema {
 impl Schema {
     async fn initial_sql<'ctx>(&self, ctx: &Context<'ctx>) -> Result<String> {
         tracing::debug!("Running GraphQL query 'schema.initial_sql'");
-        let pool = ctx.data::<Pool<Postgres>>()?;
+        let pool = ctx.data::<db::Pool>()?;
 
         db::get_schema_initial_sql(pool, &self.id)
             .await

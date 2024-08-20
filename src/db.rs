@@ -12,8 +12,10 @@ pub use question::{
 pub mod schema;
 pub use schema::{get_schema, get_schema_initial_sql, Schema};
 
+pub type Pool = sqlx::Pool<sqlx::Postgres>;
+
 /// Create a database connection pool from the DATABASE_URL environment variable.
-pub async fn pool() -> Result<sqlx::Pool<sqlx::Postgres>, Error> {
+pub async fn pool() -> Result<Pool, Error> {
     let db_url = std::env::var("DATABASE_URL").map_err(|_| Error::MissingDatabaseUrl)?;
     Ok(sqlx::postgres::PgPoolOptions::new()
         .connect(&db_url)
