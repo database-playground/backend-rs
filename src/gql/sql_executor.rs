@@ -6,8 +6,9 @@ use crate::{
     rpc::{
         self,
         dbrunner::{
-            retrieve_query_response::Kind, run_query_response::ResponseType, RetrieveQueryRequest,
-            RetrieveQueryResponse, RunQueryRequest,
+            retrieve_query_response::Kind, run_query_response::ResponseType,
+            AreQueriesOutputSameRequest, RetrieveQueryRequest, RetrieveQueryResponse,
+            RunQueryRequest,
         },
     },
 };
@@ -28,11 +29,12 @@ impl SqlExecutorMutation {
         let pool = ctx.data::<db::Pool>()?;
         let mut dbrunner = ctx.data::<rpc::DbRunnerClient>()?.clone();
 
+        tracing::debug!(question_id, "Retrieving initial SQL");
         let initial_sql = db::get_question_schema_initial_sql(pool, question_id)
             .await
             .map_err(error::gqlize)?;
 
-        // run the initial SQL
+        tracing::debug!(initial_sql, sql, "Running user query");
         let result = dbrunner
             .run_query(RunQueryRequest {
                 schema: initial_sql.clone(),
@@ -54,6 +56,7 @@ impl SqlExecutorMutation {
                 },
             })?;
 
+        tracing::debug!(question_id, "Constructing response");
         match result.into_inner().response_type {
             Some(ResponseType::Id(user_query_id)) => {
                 Ok(ExecuteResult::Success(ExecuteSuccessResult {
@@ -89,6 +92,7 @@ impl ExecuteSuccessResult {
     async fn rows<'ctx>(&self, ctx: &Context<'ctx>) -> Result<Table> {
         let mut dbrunner = ctx.data::<rpc::DbRunnerClient>()?.clone();
 
+        tracing::debug!(query_id = self.user_query_id, "Retrieving query results");
         let query_response = dbrunner
             .retrieve_query(RetrieveQueryRequest {
                 id: self.user_query_id.clone(),
@@ -97,6 +101,7 @@ impl ExecuteSuccessResult {
             .map_err(retrieve_query_internal_error)?;
         let mut query_response_body = query_response.into_inner();
 
+        tracing::debug!("Streaming and constructing table");
         // get header
         let mut column = Vec::new();
         let mut rows = Vec::new();
@@ -120,6 +125,65 @@ impl ExecuteSuccessResult {
 
         Ok(Table { column, rows })
     }
+
+    async fn same<'ctx>(&self, ctx: &Context<'ctx>) -> Result<bool> {
+        let pool = ctx.data::<db::Pool>()?;
+        let mut dbrunner = ctx.data::<rpc::DbRunnerClient>()?.clone();
+
+        tracing::debug!(query_id = self.user_query_id, "Checking answer");
+        let answer = db::get_question_answer(pool, 1)
+            .await
+            .map_err(error::gqlize)?;
+
+        tracing::debug!(
+            initial_sql = self.initial_sql,
+            answer,
+            "Running answer query"
+        );
+        let result = dbrunner
+            .run_query(RunQueryRequest {
+                schema: self.initial_sql.clone(),
+                query: answer,
+            })
+            .await
+            .map_err(|e| error::Error {
+                code: error::ErrorCode::InternalError,
+                title: EcoString::inline("Internal error"),
+                details: Cow::Borrowed("Unable to check answer."),
+                error: Some(Box::new(e)),
+            })?;
+        let answer_sql_id = match result.into_inner().response_type {
+            Some(ResponseType::Id(user_query_id)) => user_query_id,
+            Some(ResponseType::Error(error)) => {
+                return Err(error::Error {
+                    code: error::ErrorCode::InternalError,
+                    title: EcoString::inline("Internal error"),
+                    details: Cow::Borrowed("Unable to check answer."),
+                    error: Some(Box::new(AnswerExecutionError { error })),
+                }
+                .into())
+            }
+            None => return Err(invalid_response_type_error()),
+        };
+
+        tracing::debug!(answer_sql_id, "Comparing results");
+        let comparison_result = dbrunner
+            .are_queries_output_same(AreQueriesOutputSameRequest {
+                left_id: self.user_query_id.clone(),
+                right_id: answer_sql_id.clone(),
+            })
+            .await
+            .map_err(retrieve_query_internal_error)?;
+        let same = comparison_result.into_inner().same;
+
+        tracing::debug!(
+            same,
+            left_id = self.user_query_id,
+            right_id = answer_sql_id,
+            "Done comparsion"
+        );
+        Ok(same)
+    }
 }
 
 fn retrieve_query_internal_error(e: tonic::Status) -> error::Error {
@@ -140,6 +204,19 @@ fn invalid_response_type_error() -> async_graphql::Error {
     }
     .into()
 }
+
+#[derive(Debug)]
+struct AnswerExecutionError {
+    error: String,
+}
+
+impl std::fmt::Display for AnswerExecutionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Answer execution failed: {}", self.error)
+    }
+}
+
+impl std::error::Error for AnswerExecutionError {}
 
 #[derive(SimpleObject)]
 pub struct Table {
