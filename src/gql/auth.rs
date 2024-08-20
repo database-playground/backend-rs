@@ -45,7 +45,7 @@ impl AuthBuilder {
     pub async fn build(&self, jwt: &str) -> Result<Auth, AuthError> {
         #[derive(Debug, serde::Deserialize)]
         struct Claim {
-            scope: String,
+            scope: Option<String>,
         }
 
         let header = jsonwebtoken::decode_header(&jwt).map_err(AuthError::DecodeJwtHeader)?;
@@ -58,9 +58,8 @@ impl AuthBuilder {
         let scopes = token_data
             .claims
             .scope
-            .split_ascii_whitespace()
-            .map(|s| s.to_string())
-            .collect();
+            .map(|v| v.split_ascii_whitespace().map(|s| s.to_string()).collect())
+            .unwrap_or_default();
 
         Ok(Auth { scopes })
     }
