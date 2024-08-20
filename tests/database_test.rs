@@ -335,4 +335,40 @@ mod tests {
             id,
         }) if id == "20");
     }
+
+    #[tokio::test]
+    async fn test_get_question_schema_initial_sql() {
+        let initial_sql = crate::common::run_onetime(async |c| {
+            backend::db::seeder::seed_connection(c).await?;
+            Ok(backend::db::get_question_schema_initial_sql(c, 1).await?)
+        })
+        .await
+        .expect("failed to get question schema initial sql");
+
+        assert!(
+            initial_sql.contains("CREATE TABLE products"),
+            "initial sql does not contain CREATE TABLE products"
+        );
+
+        println!("{initial_sql}");
+    }
+
+    #[tokio::test]
+    async fn test_get_question_schema_initial_sql_not_found() {
+        let schema = crate::common::run_onetime(async |c| {
+            backend::db::seeder::seed_connection(c).await?;
+            Ok(backend::db::get_question_schema_initial_sql(c, 114514).await?)
+        })
+        .await
+        .map_err(|e| e.downcast::<db::Error>());
+
+        assert_matches!(
+            schema,
+            Err(Ok(db::Error::NotFound {
+                entity: "question",
+                id,
+            })) if id == "114514",
+            "question schema should not be found"
+        );
+    }
 }
