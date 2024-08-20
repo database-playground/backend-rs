@@ -5,6 +5,7 @@ use crate::db;
 
 use super::error;
 
+#[derive(Default)]
 pub struct SchemaQuery;
 
 impl SchemaQuery {}

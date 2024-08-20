@@ -15,14 +15,10 @@ async fn main() -> Result<(), anyhow::Error> {
     tracing_subscriber::fmt::init();
 
     // create the schema
-    let schema = Schema::build(
-        gql::Query(gql::schema::SchemaQuery),
-        EmptyMutation,
-        EmptySubscription,
-    )
-    .data(backend::db::pool().await?)
-    .extension(Tracing)
-    .finish();
+    let schema = Schema::build(gql::Query::default(), EmptyMutation, EmptySubscription)
+        .data(backend::db::pool().await?)
+        .extension(Tracing)
+        .finish();
 
     // start the http server
     let app = Route::new().at("/", get(graphiql).post(GraphQL::new(schema)));
