@@ -1,3 +1,5 @@
+use std::net::SocketAddr;
+
 use async_graphql::{
     extensions::Tracing, http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema,
 };
@@ -14,17 +16,20 @@ async fn graphiql() -> impl IntoResponse {
 async fn main() -> Result<(), anyhow::Error> {
     tracing_subscriber::fmt::init();
 
-    // create the schema
+    let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+    let addr = SocketAddr::from(([0, 0, 0, 0], port.parse::<u16>().expect("invalid port")));
+
     let schema = Schema::build(gql::Query::default(), EmptyMutation, EmptySubscription)
         .data(backend::db::pool().await?)
         .extension(Tracing)
         .finish();
 
-    // start the http server
     let app = Route::new().at("/", get(graphiql).post(GraphQL::new(schema)));
-    tracing::info!("GraphiQL: http://localhost:8000");
-    Server::new(TcpListener::bind("0.0.0.0:8000"))
-        .run(app)
-        .await?;
+    tracing::info!(
+        "GraphiQL: http://127.0.0.1:{port}. Listened on {addr}",
+        port = port,
+        addr = addr
+    );
+    Server::new(TcpListener::bind(addr)).run(app).await?;
     Ok(())
 }
