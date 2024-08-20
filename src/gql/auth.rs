@@ -76,18 +76,19 @@ impl Auth {
 }
 
 pub trait ContextAuthExt {
-    fn require_scope(&self, scope: Scope) -> Result<(), super::error::Error>;
+    fn require_scope(&self, scope: Scope) -> Result<(), async_graphql::Error>;
 }
 
 impl ContextAuthExt for Context<'_> {
-    fn require_scope(&self, scope: Scope) -> Result<(), super::error::Error> {
+    fn require_scope(&self, scope: Scope) -> Result<(), async_graphql::Error> {
         let Ok(auth) = self.data::<Auth>() else {
             return Err(super::error::Error {
                 code: super::error::ErrorCode::Unauthorized,
                 title: EcoString::inline("Unauthorized"),
                 details: "You must provide a credential to access this API.".into(),
                 error: None,
-            });
+            }
+            .to_gql_error());
         };
 
         if !auth.has_scope(scope) {
@@ -96,7 +97,8 @@ impl ContextAuthExt for Context<'_> {
                 title: EcoString::inline("Unauthorized"),
                 details: format!("{scope} is required to perform this action").into(),
                 error: None,
-            });
+            }
+            .to_gql_error());
         }
 
         Ok(())

@@ -31,9 +31,9 @@ pub async fn index(
             }
             Err(e) => {
                 // fixme: a bit ugly 🤔
-                return GraphQLResponse(Response::from_errors(vec![
-                    async_graphql::Error::from(e).into_server_error(Pos::default())
-                ]));
+                return GraphQLResponse(Response::from_errors(vec![e
+                    .to_gql_error()
+                    .into_server_error(Pos::default())]));
             }
         }
     }

@@ -3,6 +3,7 @@ use std::{
     fmt::{Debug, Display},
 };
 
+use async_graphql::ErrorExtensions;
 use ecow::EcoString;
 
 use crate::db;
@@ -31,12 +32,6 @@ impl Display for ErrorCode {
             ErrorCode::InvalidJwtToken => write!(f, "INVALID_JWT_TOKEN"),
             ErrorCode::InvalidQuery => write!(f, "INVALID_QUERY"),
         }
-    }
-}
-
-impl Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}: {}", self.title, self.details)
     }
 }
 
@@ -75,6 +70,19 @@ impl From<db::Error> for Error {
     }
 }
 
+impl Error {
+    pub fn to_gql_error(&self) -> async_graphql::Error {
+        async_graphql::Error::new(format!("{}: {}", self.title, self.details)).extend_with(
+            |_, eev: &mut async_graphql::ErrorExtensionValues| {
+                eev.set("code", self.code.to_string());
+                eev.set("title", self.title.as_str());
+                eev.set("details", self.details.as_ref());
+            },
+        )
+    }
+}
+
 pub fn gqlize<E: Into<Error>>(e: E) -> async_graphql::Error {
-    async_graphql::Error::from(e.into())
+    let e: Error = e.into();
+    e.to_gql_error()
 }
