@@ -5,10 +5,13 @@ use crate::{
     gql::error,
     rpc::{
         self,
-        dbrunner::{run_query_response::ResponseType, RunQueryRequest},
+        dbrunner::{
+            retrieve_query_response::Kind, run_query_response::ResponseType, RetrieveQueryRequest,
+            RetrieveQueryResponse, RunQueryRequest,
+        },
     },
 };
-use async_graphql::{Context, Object, Result, SimpleObject, Union};
+use async_graphql::{ComplexObject, Context, Object, Result, SimpleObject, Union};
 use ecow::EcoString;
 
 #[derive(Default)]
@@ -56,19 +59,12 @@ impl SqlExecutorMutation {
                 Ok(ExecuteResult::Success(ExecuteSuccessResult {
                     initial_sql,
                     user_query_id,
-                    success: true,
                 }))
             }
             Some(ResponseType::Error(error)) => {
                 Ok(ExecuteResult::Failed(ExecuteFailedResult { error }))
             }
-            None => Err(error::Error {
-                code: error::ErrorCode::InternalError,
-                title: EcoString::inline("Internal error"),
-                details: Cow::Borrowed("Unknown response type."),
-                error: None,
-            }
-            .into()),
+            None => Err(invalid_response_type_error()),
         }
     }
 }
@@ -80,13 +76,75 @@ pub enum ExecuteResult {
 }
 
 #[derive(SimpleObject)]
+#[graphql(complex)]
 pub struct ExecuteSuccessResult {
     #[graphql(visible = false)]
     initial_sql: String,
     #[graphql(visible = false)]
     user_query_id: String,
+}
 
-    pub success: bool,
+#[ComplexObject]
+impl ExecuteSuccessResult {
+    async fn rows<'ctx>(&self, ctx: &Context<'ctx>) -> Result<Table> {
+        let mut dbrunner = ctx.data::<rpc::DbRunnerClient>()?.clone();
+
+        let query_response = dbrunner
+            .retrieve_query(RetrieveQueryRequest {
+                id: self.user_query_id.clone(),
+            })
+            .await
+            .map_err(retrieve_query_internal_error)?;
+        let mut query_response_body = query_response.into_inner();
+
+        // get header
+        let mut column = Vec::new();
+        let mut rows = Vec::new();
+        loop {
+            let Some(RetrieveQueryResponse { kind }) = query_response_body
+                .message()
+                .await
+                .map_err(retrieve_query_internal_error)?
+            else {
+                break;
+            };
+            let kind = kind.ok_or_else(invalid_response_type_error)?;
+
+            match kind {
+                Kind::Header(header) => column = header.cells,
+                Kind::Row(data_row) => {
+                    rows.push(data_row.cells.into_iter().map(|c| c.value).collect())
+                }
+            }
+        }
+
+        Ok(Table { column, rows })
+    }
+}
+
+fn retrieve_query_internal_error(e: tonic::Status) -> error::Error {
+    error::Error {
+        code: error::ErrorCode::InternalError,
+        title: EcoString::inline("Internal error"),
+        details: Cow::Borrowed("Unable to retrieve query results."),
+        error: Some(Box::new(e)),
+    }
+}
+
+fn invalid_response_type_error() -> async_graphql::Error {
+    error::Error {
+        code: error::ErrorCode::InternalError,
+        title: EcoString::inline("Internal error"),
+        details: Cow::Borrowed("Unknown response type."),
+        error: None,
+    }
+    .into()
+}
+
+#[derive(SimpleObject)]
+pub struct Table {
+    pub column: Vec<String>,
+    pub rows: Vec<Vec<Option<String>>>,
 }
 
 #[derive(SimpleObject)]
