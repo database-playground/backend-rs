@@ -1,6 +1,8 @@
 //! GraphQL schemas.
 
+pub mod auth;
 pub mod error;
+pub mod poem;
 pub mod questions;
 pub mod schema;
 pub mod sql_executor;

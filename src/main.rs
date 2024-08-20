@@ -1,8 +1,10 @@
 use std::net::SocketAddr;
 
 use async_graphql::{extensions::Tracing, http::GraphiQLSource, EmptySubscription, Schema};
-use async_graphql_poem::*;
-use backend::{gql, rpc};
+use backend::{
+    gql::{self, auth::AuthBuilder},
+    rpc,
+};
 use mimalloc_rust::GlobalMiMalloc;
 use poem::{listener::TcpListener, web::Html, *};
 
@@ -26,6 +28,17 @@ async fn main() -> Result<(), anyhow::Error> {
     let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
     let addr = SocketAddr::from(([0, 0, 0, 0], port.parse::<u16>().expect("invalid port")));
 
+    let logto_domain = std::env::var("LOGTO_DOMAIN")
+        .expect("LOGTO_DOMAIN must be set")
+        .into();
+    let logto_resource_indicator = std::env::var("LOGTO_RESOURCE_INDICATOR")
+        .expect("LOGTO_RESOURCE_INDICATOR must be set")
+        .into();
+    let auth_builder = AuthBuilder {
+        logto_domain,
+        resource_indicator: logto_resource_indicator,
+    };
+
     let schema = Schema::build(
         gql::Query::default(),
         gql::Mutation::default(),
@@ -37,8 +50,10 @@ async fn main() -> Result<(), anyhow::Error> {
     .finish();
 
     let app = Route::new()
-        .at("/", get(graphiql).post(GraphQL::new(schema)))
-        .at("/health", get(health));
+        .at("/", get(graphiql).post(gql::poem::index))
+        .at("/health", get(health))
+        .data(auth_builder)
+        .data(schema);
 
     tracing::info!(
         "GraphiQL: http://127.0.0.1:{port}. Listened on {addr}",

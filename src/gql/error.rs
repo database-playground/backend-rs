@@ -10,7 +10,9 @@ use crate::db;
 pub enum ErrorCode {
     NotFound,
     InternalError,
-    InvalidQuery, // sql_executor
+    Unauthorized,
+    InvalidJwtToken, // poem
+    InvalidQuery,    // sql_executor
 }
 
 pub struct Error {
@@ -25,6 +27,8 @@ impl Display for ErrorCode {
         match self {
             ErrorCode::NotFound => write!(f, "NOT_FOUND"),
             ErrorCode::InternalError => write!(f, "INTERNAL_ERROR"),
+            ErrorCode::Unauthorized => write!(f, "UNAUTHORIZED"),
+            ErrorCode::InvalidJwtToken => write!(f, "INVALID_JWT_TOKEN"),
             ErrorCode::InvalidQuery => write!(f, "INVALID_QUERY"),
         }
     }
