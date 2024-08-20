@@ -1,6 +1,11 @@
 #![feature(async_closure, assert_matches)]
 
+use mimalloc_rust::GlobalMiMalloc;
+
 mod common;
+
+#[global_allocator]
+static GLOBAL_MIMALLOC: GlobalMiMalloc = GlobalMiMalloc;
 
 #[cfg(all(test, feature = "test_database"))]
 mod tests {

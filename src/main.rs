@@ -5,7 +5,11 @@ use async_graphql::{
 };
 use async_graphql_poem::*;
 use backend::gql;
+use mimalloc_rust::GlobalMiMalloc;
 use poem::{listener::TcpListener, web::Html, *};
+
+#[global_allocator]
+static GLOBAL_MIMALLOC: GlobalMiMalloc = GlobalMiMalloc;
 
 #[handler]
 async fn graphiql() -> impl IntoResponse {
