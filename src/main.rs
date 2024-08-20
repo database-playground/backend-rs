@@ -16,6 +16,11 @@ async fn graphiql() -> impl IntoResponse {
     Html(GraphiQLSource::build().finish())
 }
 
+#[handler]
+async fn health() -> impl IntoResponse {
+    "OK"
+}
+
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     tracing_subscriber::fmt::init();
@@ -28,7 +33,10 @@ async fn main() -> Result<(), anyhow::Error> {
         .extension(Tracing)
         .finish();
 
-    let app = Route::new().at("/", get(graphiql).post(GraphQL::new(schema)));
+    let app = Route::new()
+        .at("/", get(graphiql).post(GraphQL::new(schema)))
+        .at("/health", get(health));
+
     tracing::info!(
         "GraphiQL: http://127.0.0.1:{port}. Listened on {addr}",
         port = port,
