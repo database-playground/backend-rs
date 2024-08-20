@@ -10,6 +10,7 @@
   # https://devenv.sh/basics/
   env.GREET = "devenv";
   env.DATABASE_URL = "postgres://postgres:postgres@localhost:5432/postgres";
+  env.DBRUNNER_ADDR = "http://localhost:3000";
 
   # https://devenv.sh/packages/
   packages =
@@ -18,6 +19,7 @@
       pkgs.sqlx-cli
       pkgs.cargo-edit
       pkgs.cargo-nextest
+      pkgs.protobuf
     ]
     ++ lib.optionals pkgs.stdenv.isDarwin (
       with pkgs.darwin.apple_sdk; [ frameworks.SystemConfiguration ]

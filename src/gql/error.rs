@@ -10,13 +10,14 @@ use crate::db;
 pub enum ErrorCode {
     NotFound,
     InternalError,
+    InvalidQuery, // sql_executor
 }
 
 pub struct Error {
     pub code: ErrorCode,
     pub title: EcoString,
     pub details: Cow<'static, str>,
-    pub error: Box<dyn std::error::Error + Send + Sync>,
+    pub error: Option<Box<dyn std::error::Error + Send + Sync>>,
 }
 
 impl Display for ErrorCode {
@@ -24,6 +25,7 @@ impl Display for ErrorCode {
         match self {
             ErrorCode::NotFound => write!(f, "NOT_FOUND"),
             ErrorCode::InternalError => write!(f, "INTERNAL_ERROR"),
+            ErrorCode::InvalidQuery => write!(f, "INVALID_QUERY"),
         }
     }
 }
@@ -36,10 +38,16 @@ impl Display for Error {
 
 impl Debug for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let error = if let Some(ref e) = self.error {
+            format!("\n{:?}", e)
+        } else {
+            "no error provided".to_string()
+        };
+
         write!(
             f,
             "[{}] {}: {}\n{}",
-            self.code, self.title, self.details, self.error
+            self.code, self.title, self.details, error
         )
     }
 }
@@ -51,13 +59,13 @@ impl From<db::Error> for Error {
                 code: ErrorCode::NotFound,
                 title: EcoString::inline("No resource"),
                 details: Cow::Owned(format!("{entity} with id {id} not found")),
-                error: Box::new(value),
+                error: Some(Box::new(value)),
             },
             e => Self {
                 code: ErrorCode::InternalError,
                 title: EcoString::inline("Internal error"),
                 details: Cow::Borrowed("An internal error occurred"),
-                error: Box::new(e),
+                error: Some(Box::new(e)),
             },
         }
     }

@@ -36,6 +36,7 @@
             allowBuiltinFetchGit = true;
           };
 
+          nativeBuildInputs = [ pkgs.protobuf ];
           buildInputs = lib.optionals pkgs.stdenv.isDarwin (
             with pkgs.darwin.apple_sdk; [ frameworks.SystemConfiguration ]
           );

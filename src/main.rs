@@ -1,10 +1,8 @@
 use std::net::SocketAddr;
 
-use async_graphql::{
-    extensions::Tracing, http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema,
-};
+use async_graphql::{extensions::Tracing, http::GraphiQLSource, EmptySubscription, Schema};
 use async_graphql_poem::*;
-use backend::gql;
+use backend::{gql, rpc};
 use mimalloc_rust::GlobalMiMalloc;
 use poem::{listener::TcpListener, web::Html, *};
 
@@ -28,10 +26,15 @@ async fn main() -> Result<(), anyhow::Error> {
     let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
     let addr = SocketAddr::from(([0, 0, 0, 0], port.parse::<u16>().expect("invalid port")));
 
-    let schema = Schema::build(gql::Query::default(), EmptyMutation, EmptySubscription)
-        .data(backend::db::pool().await?)
-        .extension(Tracing)
-        .finish();
+    let schema = Schema::build(
+        gql::Query::default(),
+        gql::Mutation::default(),
+        EmptySubscription,
+    )
+    .data(backend::db::pool().await?)
+    .data(rpc::dbrunner_client().await?)
+    .extension(Tracing)
+    .finish();
 
     let app = Route::new()
         .at("/", get(graphiql).post(GraphQL::new(schema)))

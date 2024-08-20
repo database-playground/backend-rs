@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT initial_sql\n        FROM dp_questions\n        JOIN dp_schemas USING (schema_id)\n        WHERE question_id = $1 AND dp_questions.deleted_at IS NULL\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "initial_sql",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b6b04e7b1743083949899d6b745c8bdb14fd07f6d984eb03f8495ebadc9a347a"
+}
