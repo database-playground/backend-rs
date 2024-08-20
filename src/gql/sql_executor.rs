@@ -2,7 +2,10 @@ use std::borrow::Cow;
 
 use crate::{
     db,
-    gql::error,
+    gql::{
+        auth::{ContextAuthExt, Scope},
+        error,
+    },
     rpc::{
         self,
         dbrunner::{
@@ -26,6 +29,8 @@ impl SqlExecutorMutation {
         question_id: i64,
         sql: String,
     ) -> Result<ExecuteResult> {
+        ctx.require_scope(Scope::Challenge)?;
+
         let pool = ctx.data::<db::Pool>()?;
         let mut dbrunner = ctx.data::<rpc::DbRunnerClient>()?.clone();
 
@@ -127,6 +132,8 @@ impl ExecuteSuccessResult {
     }
 
     async fn same<'ctx>(&self, ctx: &Context<'ctx>) -> Result<bool> {
+        ctx.require_scope(Scope::ReadResource)?;
+
         let pool = ctx.data::<db::Pool>()?;
         let mut dbrunner = ctx.data::<rpc::DbRunnerClient>()?.clone();
 

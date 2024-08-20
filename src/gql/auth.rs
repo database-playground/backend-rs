@@ -6,6 +6,35 @@ use ecow::EcoString;
 use jsonwebtoken::{jwk::JwkSet, Algorithm, DecodingKey, Validation};
 use reqwest::Url;
 
+#[derive(Clone, Copy)]
+pub enum Scope {
+    ReadResource,
+    WriteResource,
+    Challenge,
+}
+
+impl std::fmt::Display for Scope {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl std::fmt::Debug for Scope {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl Scope {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Scope::ReadResource => "read:resource",
+            Scope::WriteResource => "write:resource",
+            Scope::Challenge => "challenge",
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct AuthBuilder {
     pub logto_domain: EcoString,
@@ -42,17 +71,17 @@ pub struct Auth {
 }
 
 impl Auth {
-    pub fn has_scope(&self, scope: &str) -> bool {
-        self.scopes.contains(scope)
+    pub fn has_scope(&self, scope: Scope) -> bool {
+        self.scopes.contains(scope.as_str())
     }
 }
 
 pub trait ContextAuthExt {
-    fn has_scope(&self, scope: &str) -> Result<(), super::error::Error>;
+    fn require_scope(&self, scope: Scope) -> Result<(), super::error::Error>;
 }
 
 impl ContextAuthExt for Context<'_> {
-    fn has_scope(&self, scope: &str) -> Result<(), super::error::Error> {
+    fn require_scope(&self, scope: Scope) -> Result<(), super::error::Error> {
         let Ok(auth) = self.data::<Auth>() else {
             return Err(super::error::Error {
                 code: super::error::ErrorCode::Unauthorized,

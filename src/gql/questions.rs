@@ -2,7 +2,10 @@ use async_graphql::{ComplexObject, Context, Enum, Object, Result, SimpleObject};
 use chrono::{DateTime, Utc};
 use sqlx::{Pool, Postgres};
 
-use crate::db;
+use crate::{
+    db,
+    gql::auth::{ContextAuthExt, Scope},
+};
 
 use super::schema::Schema;
 
@@ -58,6 +61,8 @@ pub struct Question {
 #[ComplexObject]
 impl Question {
     async fn schema<'ctx>(&self, ctx: &Context<'ctx>) -> Result<Option<Schema>> {
+        ctx.require_scope(Scope::ReadResource)?;
+
         tracing::debug!("Running GraphQL query 'question.schema'");
         let pool = ctx.data::<Pool<Postgres>>()?;
 
@@ -71,6 +76,8 @@ impl Question {
     }
 
     async fn answer<'ctx>(&self, ctx: &Context<'ctx>) -> Result<String> {
+        ctx.require_scope(Scope::ReadResource)?;
+
         tracing::debug!("Running GraphQL query 'question.answer'");
         let pool = ctx.data::<Pool<Postgres>>()?;
 
@@ -80,6 +87,8 @@ impl Question {
     }
 
     async fn solution<'ctx>(&self, ctx: &Context<'ctx>) -> Result<Option<String>> {
+        ctx.require_scope(Scope::ReadResource)?;
+
         tracing::debug!("Running GraphQL query 'question.solution'");
         let pool = ctx.data::<Pool<Postgres>>()?;
 

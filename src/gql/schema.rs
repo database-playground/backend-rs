@@ -1,7 +1,10 @@
 use async_graphql::{ComplexObject, Context, Object, Result, SimpleObject};
 use chrono::Utc;
 
-use crate::db;
+use crate::{
+    db,
+    gql::auth::{ContextAuthExt, Scope},
+};
 
 use super::error;
 
@@ -13,6 +16,8 @@ impl SchemaQuery {}
 #[Object]
 impl SchemaQuery {
     async fn schema<'ctx>(&self, ctx: &Context<'ctx>, id: String) -> Result<Schema> {
+        ctx.require_scope(Scope::ReadResource)?;
+
         tracing::debug!("Running GraphQL query 'schema'");
         let pool = ctx.data::<db::Pool>()?;
 
