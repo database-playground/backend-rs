@@ -16,7 +16,7 @@ impl SchemaQuery {}
 #[Object]
 impl SchemaQuery {
     async fn schema<'ctx>(&self, ctx: &Context<'ctx>, id: String) -> Result<Schema> {
-        ctx.require_scope(Scope::ReadResource)?;
+        ctx.require_scope(Scope::ReadPublicResource)?;
 
         tracing::debug!("Running GraphQL query 'schema'");
         let pool = ctx.data::<db::Pool>()?;

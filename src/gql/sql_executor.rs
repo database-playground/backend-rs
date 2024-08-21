@@ -29,7 +29,7 @@ impl SqlExecutorMutation {
         question_id: i64,
         sql: String,
     ) -> Result<ExecuteResult> {
-        ctx.require_scope(Scope::Challenge)?;
+        ctx.require_scope(Scope::Execution)?;
 
         let pool = ctx.data::<db::Pool>()?;
         let mut dbrunner = ctx.data::<rpc::DbRunnerClient>()?.clone();
@@ -134,7 +134,7 @@ impl ExecuteSuccessResult {
     }
 
     async fn same<'ctx>(&self, ctx: &Context<'ctx>) -> Result<bool> {
-        ctx.require_scope(Scope::ReadResource)?;
+        ctx.require_scope(Scope::ReadAnswer)?;
 
         let pool = ctx.data::<db::Pool>()?;
         let mut dbrunner = ctx.data::<rpc::DbRunnerClient>()?.clone();

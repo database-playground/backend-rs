@@ -8,9 +8,14 @@ use reqwest::Url;
 
 #[derive(Clone, Copy)]
 pub enum Scope {
-    ReadResource,
-    WriteResource,
-    Challenge,
+    /// Allow reading public resources (schema, questions, etc.)
+    ReadPublicResource,
+    /// Allow reading the answer.
+    ReadAnswer,
+    /// Allow reading the solution video.
+    ReadSolution,
+    /// Allow executing the SQL statement.
+    Execution,
 }
 
 impl std::fmt::Display for Scope {
@@ -28,9 +33,10 @@ impl std::fmt::Debug for Scope {
 impl Scope {
     pub fn as_str(&self) -> &str {
         match self {
-            Scope::ReadResource => "read:resource",
-            Scope::WriteResource => "write:resource",
-            Scope::Challenge => "challenge",
+            Scope::ReadPublicResource => "read:public_resource",
+            Scope::ReadAnswer => "read:answer",
+            Scope::ReadSolution => "read:solution",
+            Scope::Execution => "execution",
         }
     }
 }

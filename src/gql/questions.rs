@@ -61,7 +61,7 @@ pub struct Question {
 #[ComplexObject]
 impl Question {
     async fn schema<'ctx>(&self, ctx: &Context<'ctx>) -> Result<Option<Schema>> {
-        ctx.require_scope(Scope::ReadResource)?;
+        ctx.require_scope(Scope::ReadPublicResource)?;
 
         tracing::debug!("Running GraphQL query 'question.schema'");
         let pool = ctx.data::<Pool<Postgres>>()?;
@@ -76,7 +76,7 @@ impl Question {
     }
 
     async fn answer<'ctx>(&self, ctx: &Context<'ctx>) -> Result<String> {
-        ctx.require_scope(Scope::ReadResource)?;
+        ctx.require_scope(Scope::ReadAnswer)?;
 
         tracing::debug!("Running GraphQL query 'question.answer'");
         let pool = ctx.data::<Pool<Postgres>>()?;
@@ -87,7 +87,7 @@ impl Question {
     }
 
     async fn solution<'ctx>(&self, ctx: &Context<'ctx>) -> Result<Option<String>> {
-        ctx.require_scope(Scope::ReadResource)?;
+        ctx.require_scope(Scope::ReadSolution)?;
 
         tracing::debug!("Running GraphQL query 'question.solution'");
         let pool = ctx.data::<Pool<Postgres>>()?;
