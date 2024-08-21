@@ -48,7 +48,7 @@ impl QuestionQuery {
 #[derive(Debug, SimpleObject)]
 #[graphql(complex)]
 pub struct Question {
-    pub question_id: i64,
+    pub id: i64,
     pub schema_id: Option<String>,
     pub question_type: String,
     pub difficulty: Difficulty,
@@ -81,7 +81,7 @@ impl Question {
         tracing::debug!("Running GraphQL query 'question.answer'");
         let pool = ctx.data::<Pool<Postgres>>()?;
 
-        db::get_question_answer(pool, self.question_id)
+        db::get_question_answer(pool, self.id)
             .await
             .map_err(Into::into)
     }
@@ -92,7 +92,7 @@ impl Question {
         tracing::debug!("Running GraphQL query 'question.solution'");
         let pool = ctx.data::<Pool<Postgres>>()?;
 
-        db::get_question_solution(pool, self.question_id)
+        db::get_question_solution(pool, self.id)
             .await
             .map_err(Into::into)
     }
@@ -101,7 +101,7 @@ impl Question {
 impl From<db::Question> for Question {
     fn from(question: db::Question) -> Self {
         Self {
-            question_id: question.question_id,
+            id: question.question_id,
             schema_id: question.schema_id,
             question_type: question.question_type,
             difficulty: question.difficulty.into(),
