@@ -11,6 +11,7 @@
   env.GREET = "devenv";
   env.DATABASE_URL = "postgres://postgres:postgres@localhost:5432/postgres";
   env.DBRUNNER_ADDR = "http://localhost:3000";
+  env.FRONTEND_CORS_ORIGIN = "http://localhost:5173";
 
   # https://devenv.sh/packages/
   packages =

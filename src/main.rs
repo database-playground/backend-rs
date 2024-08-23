@@ -5,6 +5,7 @@ use backend::{
     gql::{self, auth::AuthBuilder},
     rpc,
 };
+use middleware::Cors;
 use mimalloc_rust::GlobalMiMalloc;
 use poem::{listener::TcpListener, web::Html, *};
 
@@ -49,9 +50,22 @@ async fn main() -> Result<(), anyhow::Error> {
     .extension(Tracing)
     .finish();
 
+    let origin = std::env::var("FRONTEND_CORS_ORIGIN")
+        .map(|v| {
+            v.split_ascii_whitespace()
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>()
+        })
+        .unwrap_or_else(|_| vec!["https://dbplay.pan93.com".to_string()]);
+
+    let cors = Cors::new()
+        .allow_origins(origin)
+        .allow_methods(["GET", "POST"]);
+
     let app = Route::new()
         .at("/", get(graphiql).post(gql::poem::index))
         .at("/health", get(health))
+        .with(cors)
         .data(auth_builder)
         .data(schema);
 
