@@ -24,6 +24,8 @@ impl QuestionQuery {
         limit: Option<i64>,
         offset: Option<i64>,
     ) -> Result<Vec<Question>> {
+        ctx.require_scope(Scope::ReadPublicResource)?;
+
         tracing::debug!("Running GraphQL query 'questions'");
         let pool = ctx.data::<db::Pool>()?;
         let cursor = db::Cursor { limit, offset };
@@ -35,6 +37,8 @@ impl QuestionQuery {
     }
 
     async fn question<'ctx>(&self, ctx: &Context<'ctx>, id: i64) -> Result<Question> {
+        ctx.require_scope(Scope::ReadPublicResource)?;
+
         tracing::debug!("Running GraphQL query 'question'");
         let pool = ctx.data::<Pool<Postgres>>()?;
 
