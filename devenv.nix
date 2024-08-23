@@ -10,8 +10,8 @@
   # https://devenv.sh/basics/
   env.GREET = "devenv";
   env.DATABASE_URL = "postgres://postgres:postgres@localhost:5432/postgres";
-  env.DBRUNNER_ADDR = "http://localhost:3000";
-  env.FRONTEND_CORS_ORIGIN = "http://localhost:5173";
+  env.DBRUNNER_ADDR = "";
+  env.FRONTEND_CORS_ORIGIN = "https://host1 https://host2";
 
   # https://devenv.sh/packages/
   packages =
