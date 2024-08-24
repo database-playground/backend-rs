@@ -14,6 +14,10 @@ pub use schema::*;
 
 pub type Pool = sqlx::Pool<sqlx::Postgres>;
 
+pub trait Executor<'a>: sqlx::Executor<'a, Database = sqlx::Postgres> + Copy {}
+
+impl<'a, E> Executor<'a> for E where E: sqlx::Executor<'a, Database = sqlx::Postgres> + Copy {}
+
 /// Create a database connection pool from the DATABASE_URL environment variable.
 pub async fn pool() -> Result<Pool, Error> {
     let db_url = std::env::var("DATABASE_URL").map_err(|_| Error::MissingDatabaseUrl)?;

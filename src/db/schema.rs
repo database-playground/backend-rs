@@ -1,8 +1,7 @@
 //! Schema-related database operations.
 
-use super::Error;
+use super::{Error, Executor};
 use chrono::Utc;
-use sqlx::{Executor, Postgres};
 
 #[derive(Debug, Clone)]
 pub struct Schema {
@@ -14,10 +13,7 @@ pub struct Schema {
 }
 
 #[tracing::instrument(skip(conn))]
-pub async fn get_schema(
-    conn: impl Executor<'_, Database = Postgres>,
-    schema_id: &str,
-) -> Result<Schema, Error> {
+pub async fn get_schema(conn: impl Executor<'_>, schema_id: &str) -> Result<Schema, Error> {
     tracing::debug!("Getting schema from database");
 
     sqlx::query_as!(
@@ -42,7 +38,7 @@ pub async fn get_schema(
 
 #[tracing::instrument(skip(conn))]
 pub async fn get_schema_initial_sql(
-    conn: impl Executor<'_, Database = Postgres>,
+    conn: impl Executor<'_>,
     schema_id: &str,
 ) -> Result<String, Error> {
     tracing::debug!("Getting schema initial SQL from database");

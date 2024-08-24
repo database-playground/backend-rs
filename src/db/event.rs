@@ -1,6 +1,4 @@
-use sqlx::{Executor, Postgres};
-
-use super::Error;
+use super::{Error, Executor};
 
 #[derive(Debug, Clone, Copy, sqlx::Type, PartialEq, Eq)]
 #[sqlx(type_name = "dp_attempt_status", rename_all = "lowercase")]
@@ -12,7 +10,7 @@ pub enum AttemptStatus {
 
 #[tracing::instrument(skip(conn))]
 pub async fn create_attempt_event(
-    conn: impl Executor<'_, Database = Postgres>,
+    conn: impl Executor<'_>,
     user_id: &str,
     question_id: i64,
     query: &str,
@@ -38,7 +36,7 @@ pub async fn create_attempt_event(
 
 #[tracing::instrument(skip(conn))]
 pub async fn create_solution_event(
-    conn: impl Executor<'_, Database = Postgres>,
+    conn: impl Executor<'_>,
     user_id: &str,
     question_id: i64,
 ) -> Result<(), Error> {

@@ -1,9 +1,8 @@
 //! Question-related database operations.
 
 use chrono::{DateTime, Utc};
-use sqlx::{Executor, Postgres};
 
-use super::{cursor::Cursor, Error};
+use super::{cursor::Cursor, Error, Executor};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Question {
@@ -27,7 +26,7 @@ pub enum Difficulty {
 
 #[tracing::instrument(skip(conn))]
 pub async fn list_questions(
-    conn: impl Executor<'_, Database = Postgres>,
+    conn: impl Executor<'_>,
     cursor: Cursor,
 ) -> Result<Vec<Question>, Error> {
     tracing::debug!("Listing questions from database");
@@ -50,10 +49,7 @@ pub async fn list_questions(
 }
 
 #[tracing::instrument(skip(conn))]
-pub async fn get_question(
-    conn: impl Executor<'_, Database = Postgres>,
-    question_id: i64,
-) -> Result<Question, Error> {
+pub async fn get_question(conn: impl Executor<'_>, question_id: i64) -> Result<Question, Error> {
     tracing::debug!("Getting question from database");
 
     if question_id < 0 {
@@ -82,7 +78,7 @@ pub async fn get_question(
 
 #[tracing::instrument(skip(conn))]
 pub async fn get_question_answer(
-    conn: impl Executor<'_, Database = Postgres>,
+    conn: impl Executor<'_>,
     question_id: i64,
 ) -> Result<String, Error> {
     tracing::debug!("Getting question answer from database");
@@ -113,7 +109,7 @@ pub async fn get_question_answer(
 
 #[tracing::instrument(skip(conn))]
 pub async fn get_question_solution(
-    conn: impl Executor<'_, Database = Postgres>,
+    conn: impl Executor<'_>,
     question_id: i64,
 ) -> Result<Option<String>, Error> {
     tracing::debug!("Getting question solution from database");
@@ -143,7 +139,7 @@ pub async fn get_question_solution(
 }
 
 pub async fn get_question_schema_initial_sql(
-    conn: impl Executor<'_, Database = Postgres>,
+    conn: impl Executor<'_>,
     question_id: i64,
 ) -> Result<String, Error> {
     tracing::debug!("Getting question schema initial SQL from database");
