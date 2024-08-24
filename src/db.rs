@@ -7,12 +7,9 @@ pub mod cursor;
 pub use cursor::Cursor;
 pub mod event;
 pub mod question;
-pub use question::{
-    get_question, get_question_answer, get_question_schema_initial_sql, get_question_solution,
-    list_questions, Difficulty, Question,
-};
+pub use question::*;
 pub mod schema;
-pub use schema::{get_schema, get_schema_initial_sql, Schema};
+pub use schema::*;
 
 pub type Pool = sqlx::Pool<sqlx::Postgres>;
 
