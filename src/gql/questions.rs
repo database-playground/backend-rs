@@ -79,17 +79,6 @@ impl Question {
         }
     }
 
-    async fn answer<'ctx>(&self, ctx: &Context<'ctx>) -> Result<String> {
-        ctx.require_scope(Scope::ReadAnswer)?;
-
-        tracing::debug!("Running GraphQL query 'question.answer'");
-        let pool = ctx.data::<Pool<Postgres>>()?;
-
-        db::get_question_answer(pool, self.id)
-            .await
-            .map_err(Into::into)
-    }
-
     async fn solution<'ctx>(&self, ctx: &Context<'ctx>) -> Result<Option<String>> {
         ctx.require_scope(Scope::ReadSolution)?;
 
