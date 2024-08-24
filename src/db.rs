@@ -5,6 +5,8 @@ pub mod seeder;
 
 pub mod cursor;
 pub use cursor::Cursor;
+pub mod user;
+pub use user::*;
 pub mod event;
 pub use event::*;
 pub mod question;
