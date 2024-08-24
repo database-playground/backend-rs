@@ -6,6 +6,7 @@ pub mod seeder;
 pub mod cursor;
 pub use cursor::Cursor;
 pub mod event;
+pub use event::*;
 pub mod question;
 pub use question::*;
 pub mod schema;
