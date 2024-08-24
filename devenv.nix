@@ -21,6 +21,7 @@
       pkgs.cargo-edit
       pkgs.cargo-nextest
       pkgs.protobuf
+      pkgs.sqlfluff
     ]
     ++ lib.optionals pkgs.stdenv.isDarwin (
       with pkgs.darwin.apple_sdk; [ frameworks.SystemConfiguration ]
@@ -31,7 +32,17 @@
   languages.rust.channel = "nightly";
 
   # https://devenv.sh/processes/
-  # processes.cargo-watch.exec = "cargo-watch";
+  processes.backend = {
+    exec = "cargo run --release";
+    process-compose = {
+      depends_on = {
+        postgres.condition = "process_healthy";
+      };
+      environment = [
+        "PORT=30000"
+      ];
+    };
+  };
 
   # https://devenv.sh/services/
   services.postgres.enable = true;
