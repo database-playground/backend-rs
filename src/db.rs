@@ -5,6 +5,7 @@ pub mod seeder;
 
 pub mod cursor;
 pub use cursor::Cursor;
+pub mod event;
 pub mod question;
 pub use question::{
     get_question, get_question_answer, get_question_schema_initial_sql, get_question_solution,

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO dp_attempt_events (user_id, question_id, query, status)\n        VALUES ($1, $2, $3, $4)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Int8",
+        "Text",
+        {
+          "Custom": {
+            "name": "dp_attempt_status",
+            "kind": {
+              "Enum": [
+                "pending",
+                "passed",
+                "failed"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "28c7cd952957e611b9897e811aaa832c1141dc40e9b6b7267784aa7e7117ceda"
+}
