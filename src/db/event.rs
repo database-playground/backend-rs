@@ -10,6 +10,7 @@ pub enum AttemptStatus {
     Failed,
 }
 
+#[tracing::instrument(skip(conn))]
 pub async fn create_attempt_event(
     conn: impl Executor<'_, Database = Postgres>,
     user_id: &str,
@@ -17,6 +18,8 @@ pub async fn create_attempt_event(
     query: &str,
     status: AttemptStatus,
 ) -> Result<(), Error> {
+    tracing::debug!("Creating attempt event in database");
+
     let query = sqlx::query!(
         r#"
         INSERT INTO dp_attempt_events (user_id, question_id, query, status)
@@ -32,11 +35,14 @@ pub async fn create_attempt_event(
     Ok(())
 }
 
+#[tracing::instrument(skip(conn))]
 pub async fn create_solution_event(
     conn: impl Executor<'_, Database = Postgres>,
     user_id: &str,
     question_id: i64,
 ) -> Result<(), Error> {
+    tracing::debug!("Creating solution event in database");
+
     let query = sqlx::query!(
         r#"
         INSERT INTO dp_solution_events (user_id, question_id)
