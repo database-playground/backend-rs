@@ -45,20 +45,15 @@ pub async fn get_or_initialize_user(conn: impl Acquire<'_>, user_id: &str) -> Re
     Ok(created_user_info)
 }
 
-pub struct GroupCreateParameters {
-    pub name: String,
-    pub description: Option<String>,
-}
-
-pub struct GroupCreateParameter {
-    pub name: String,
-    pub description: Option<String>,
+pub struct GroupCreateParameter<'a> {
+    pub name: &'a str,
+    pub description: Option<&'a str>,
 }
 
 #[tracing::instrument(skip(conn))]
 pub async fn create_group(
     conn: impl Executor<'_>,
-    GroupCreateParameter { name, description }: GroupCreateParameter,
+    GroupCreateParameter { name, description }: GroupCreateParameter<'_>,
 ) -> Result<i64, Error> {
     tracing::debug!("Creating group");
 
