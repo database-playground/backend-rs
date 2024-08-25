@@ -16,9 +16,11 @@ pub use schema::*;
 
 pub type Pool = sqlx::Pool<sqlx::Postgres>;
 
-pub trait Executor<'a>: sqlx::Executor<'a, Database = sqlx::Postgres> + Copy {}
+pub trait Executor<'c>: sqlx::Executor<'c, Database = sqlx::Postgres> {}
+pub trait Acquire<'c>: sqlx::Acquire<'c, Database = sqlx::Postgres> {}
 
-impl<'a, E> Executor<'a> for E where E: sqlx::Executor<'a, Database = sqlx::Postgres> + Copy {}
+impl<'c, T> Executor<'c> for T where T: sqlx::Executor<'c, Database = sqlx::Postgres> {}
+impl<'c, T> Acquire<'c> for T where T: sqlx::Acquire<'c, Database = sqlx::Postgres> {}
 
 /// Create a database connection pool from the DATABASE_URL environment variable.
 pub async fn pool() -> Result<Pool, Error> {

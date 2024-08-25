@@ -1,4 +1,4 @@
-use super::{Error, Executor};
+use super::{Acquire, Error, Executor};
 
 #[derive(Debug, Clone)]
 pub struct User {
@@ -7,8 +7,10 @@ pub struct User {
 }
 
 #[tracing::instrument(skip(conn))]
-pub async fn get_or_initialize_user(conn: impl Executor<'_>, user_id: &str) -> Result<User, Error> {
+pub async fn get_or_initialize_user(conn: impl Acquire<'_>, user_id: &str) -> Result<User, Error> {
     tracing::debug!("Getting user from database");
+
+    let mut conn = conn.acquire().await?;
 
     let user_info = sqlx::query_as!(
         User,
@@ -19,7 +21,7 @@ pub async fn get_or_initialize_user(conn: impl Executor<'_>, user_id: &str) -> R
         "#,
         user_id,
     )
-    .fetch_optional(conn)
+    .fetch_optional(&mut *conn)
     .await?;
 
     if let Some(user_info) = user_info {
@@ -37,7 +39,7 @@ pub async fn get_or_initialize_user(conn: impl Executor<'_>, user_id: &str) -> R
         "#,
         user_id,
     )
-    .fetch_one(conn)
+    .fetch_one(&mut *conn)
     .await?;
 
     Ok(created_user_info)
