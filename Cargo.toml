@@ -18,11 +18,9 @@ async-graphql = { version = "7.0.7", features = [
     "tracing",
     "tempfile",
 ], default-features = false }
-anyhow = "1.0.86"
 async-graphql-poem = "7.0.7"
 chrono = { version = "0.4.38", features = ["std"], default-features = false }
 ecow = "0.2.2"
-include_dir = { version = "0.7.4", features = ["nightly"], optional = true }
 poem = "3.0.4"
 serde = { version = "1.0.209", features = ["derive"] }
 sqlx = { version = "0.8", features = [
@@ -58,12 +56,9 @@ opt-level = 3
 
 [features]
 # Run the integration tests related to PostgreSQL.
-test_database = ["seeder"]
-# Build the seeder.
-seeder = ["dep:include_dir"]
+test_database = []
 
 [dev-dependencies]
-uuid = { version = "1.10.0", features = ["v4"] }
 sqlx = { version = "0.8", features = ["migrate"] }
 
 [build-dependencies]
