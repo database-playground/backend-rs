@@ -64,7 +64,7 @@ pub async fn create_group(
         RETURNING group_id
         "#,
         name,
-        description,
+        description.unwrap_or(""),
     )
     .fetch_one(conn)
     .await?
