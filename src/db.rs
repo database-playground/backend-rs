@@ -1,8 +1,5 @@
 //! Operate with the database and the models.
 
-#[cfg(feature = "seeder")]
-pub mod seeder;
-
 pub mod cursor;
 pub use cursor::Cursor;
 pub mod user;
