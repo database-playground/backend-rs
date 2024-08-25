@@ -1,5 +1,4 @@
 #![cfg(all(test, feature = "test_database"))]
-#![feature(assert_matches)]
 
 use backend::db::AttemptStatus;
 use sqlx::PgPool;
