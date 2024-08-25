@@ -32,7 +32,7 @@ impl SqlExecutorMutation {
         ctx.require_scope(Scope::Execution)?;
 
         let pool = ctx.data::<db::Pool>()?;
-        let mut dbrunner = ctx.data::<rpc::DbRunnerClient>()?.clone();
+        let mut dbrunner = ctx.rpc_client()?;
 
         tracing::debug!(question_id, "Retrieving initial SQL");
         let initial_sql = db::get_question_schema_initial_sql(pool, question_id)
@@ -47,8 +47,8 @@ impl SqlExecutorMutation {
             })
             .await
             .map_err(|e| match e {
-                _ if e.code() == tonic::Code::InvalidArgument => Error::InvalidQuery(e).into(),
-                _ => Error::RetrieveFailed(e).into(),
+                _ if e.code() == tonic::Code::InvalidArgument => Error::InvalidQuery(e),
+                _ => Error::RetrieveFailed(e),
             })?;
 
         tracing::debug!(question_id, "Constructing response");
@@ -85,7 +85,7 @@ pub struct ExecuteSuccessResult {
 #[ComplexObject]
 impl ExecuteSuccessResult {
     async fn rows<'ctx>(&self, ctx: &Context<'ctx>) -> Result<Table> {
-        let mut dbrunner = ctx.data::<rpc::DbRunnerClient>()?.clone();
+        let mut dbrunner = ctx.rpc_client()?;
 
         tracing::debug!(query_id = self.user_query_id, "Retrieving query results");
         let query_response = dbrunner
@@ -108,7 +108,7 @@ impl ExecuteSuccessResult {
             else {
                 break;
             };
-            let kind = kind.ok_or_else(Error::InvalidResponseType)?;
+            let kind = kind.ok_or(Error::InvalidResponseType)?;
 
             match kind {
                 Kind::Header(header) => column = header.cells,
@@ -125,7 +125,7 @@ impl ExecuteSuccessResult {
         ctx.require_scope(Scope::ReadAnswer)?;
 
         let pool = ctx.data::<db::Pool>()?;
-        let mut dbrunner = ctx.data::<rpc::DbRunnerClient>()?.clone();
+        let mut dbrunner = ctx.rpc_client()?;
 
         tracing::debug!(query_id = self.user_query_id, "Checking answer");
         let answer = db::get_question_answer(pool, 1)
@@ -182,47 +182,69 @@ pub struct ExecuteFailedResult {
 }
 
 pub enum Error {
+    /// The generic error of async-graphql.
+    GenericError(async_graphql::Error),
     InvalidQuery(tonic::Status),
     RetrieveFailed(tonic::Status),
     InvalidResponseType,
     DbrunnerUnavailable,
-    AnswerInvalid { error: String },
+    AnswerInvalid {
+        error: String,
+    },
 }
 
 impl From<Error> for async_graphql::Error {
     fn from(value: Error) -> Self {
         match value {
+            Error::GenericError(e) => e,
             Error::InvalidQuery(e) => error::Error {
                 code: error::ErrorCode::InvalidQuery,
                 title: EcoString::inline("Invalid query"),
                 details: e.message().to_string().into(),
                 error: Some(Box::new(e)),
-            },
+            }
+            .to_gql_error(),
             Error::RetrieveFailed(e) => error::Error {
                 code: error::ErrorCode::InternalError,
                 title: EcoString::inline("Internal error"),
                 details: Cow::Borrowed("Unable to retrieve results from dbrunner."),
                 error: Some(Box::new(e)),
-            },
+            }
+            .to_gql_error(),
             Error::InvalidResponseType => error::Error {
                 code: error::ErrorCode::InternalError,
                 title: EcoString::inline("Internal error"),
                 details: Cow::Borrowed("Unknown response type."),
                 error: None,
-            },
+            }
+            .to_gql_error(),
             Error::DbrunnerUnavailable => error::Error {
                 code: error::ErrorCode::InternalError,
                 title: EcoString::inline("Internal error"),
                 details: Cow::Borrowed("Database runner is not available."),
                 error: None,
-            },
+            }
+            .to_gql_error(),
             Error::AnswerInvalid { error } => error::Error {
                 code: error::ErrorCode::InternalError,
                 title: EcoString::inline("Invalid answer"),
                 details: error.into(),
                 error: None,
-            },
+            }
+            .to_gql_error(),
         }
-        .to_gql_error()
+    }
+}
+
+trait ContextExt {
+    fn rpc_client(&self) -> Result<rpc::DbRunnerClient, Error>;
+}
+
+impl ContextExt for Context<'_> {
+    fn rpc_client(&self) -> Result<rpc::DbRunnerClient, Error> {
+        self.data::<Option<rpc::DbRunnerClient>>()
+            .map_err(Error::GenericError)?
+            .clone()
+            .ok_or(Error::DbrunnerUnavailable)
     }
 }

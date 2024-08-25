@@ -46,7 +46,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         EmptySubscription,
     )
     .data(backend::db::pool().await?)
-    .data(rpc::dbrunner_client().await?)
+    .data(
+        rpc::dbrunner_client()
+            .await
+            .inspect_err(|e| {
+                tracing::warn!(
+                    error = ?e,
+                    "Failed to connect to dbrunner. Disabling SQL execution."
+                );
+            })
+            .ok(),
+    )
     .extension(Tracing)
     .finish();
 
