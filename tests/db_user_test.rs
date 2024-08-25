@@ -1,6 +1,9 @@
 #![cfg(all(test, feature = "test_database"))]
+#![feature(assert_matches)]
 
 mod test_get_or_initialize_user {
+    use std::assert_matches::assert_matches;
+
     use sqlx::PgPool;
 
     #[sqlx::test(fixtures("group", "user"))]
@@ -31,6 +34,15 @@ mod test_get_or_initialize_user {
 
         assert_eq!(user.user_id, "usertest0");
         assert_eq!(user.group_id, None);
+    }
+
+    #[sqlx::test(fixtures("group", "user"))]
+    async fn test_deleted_user(pool: PgPool) {
+        let user = backend::db::get_or_initialize_user(&pool, "userdeleted0")
+            .await
+            .expect_err("user should not be found");
+
+        assert_matches!(user, backend::db::Error::UserDeleted);
     }
 }
 
@@ -86,6 +98,8 @@ mod test_create_group {
 }
 
 mod test_get_group {
+    use std::assert_matches::assert_matches;
+
     use sqlx::PgPool;
 
     #[sqlx::test(fixtures("group"))]
@@ -106,5 +120,31 @@ mod test_get_group {
 
         assert_eq!(group.name, "group3");
         assert_eq!(group.description, "");
+    }
+
+    #[sqlx::test(fixtures("group"))]
+    async fn test_get_group_not_found(pool: PgPool) {
+        let group = backend::db::get_group(&pool, 123456).await;
+
+        assert_matches!(
+            group,
+            Err(backend::db::Error::NotFound {
+                entity: "group",
+                id,
+            }) if id == "123456"
+        );
+    }
+
+    #[sqlx::test(fixtures("group"))]
+    async fn test_get_group_deleted(pool: PgPool) {
+        let group = backend::db::get_group(&pool, 4).await;
+
+        assert_matches!(
+            group,
+            Err(backend::db::Error::NotFound {
+                entity: "group",
+                id,
+            }) if id == "4"
+        );
     }
 }

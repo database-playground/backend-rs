@@ -1,9 +1,14 @@
+use ecow::eco_format;
+
 use super::{Acquire, Error, Executor};
 
 #[derive(Debug, Clone)]
 pub struct User {
     pub user_id: String,
     pub group_id: Option<i64>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+    pub deleted_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[tracing::instrument(skip(conn))]
@@ -15,7 +20,7 @@ pub async fn get_or_initialize_user(conn: impl Acquire<'_>, user_id: &str) -> Re
     let user_info = sqlx::query_as!(
         User,
         r#"
-        SELECT user_id, group_id
+        SELECT user_id, group_id, created_at, updated_at, deleted_at
         FROM dp_users
         WHERE user_id = $1
         "#,
@@ -25,6 +30,10 @@ pub async fn get_or_initialize_user(conn: impl Acquire<'_>, user_id: &str) -> Re
     .await?;
 
     if let Some(user_info) = user_info {
+        if user_info.deleted_at.is_some() {
+            return Err(Error::UserDeleted);
+        }
+
         return Ok(user_info);
     }
 
@@ -35,7 +44,7 @@ pub async fn get_or_initialize_user(conn: impl Acquire<'_>, user_id: &str) -> Re
         r#"
         INSERT INTO dp_users (user_id)
         VALUES ($1)
-        RETURNING user_id, group_id
+        RETURNING user_id, group_id, created_at, updated_at, deleted_at
         "#,
         user_id,
     )
@@ -73,6 +82,7 @@ pub async fn create_group(
     Ok(group_id)
 }
 
+#[derive(Debug, Clone)]
 pub struct Group {
     pub group_id: i64,
     pub name: String,
@@ -95,7 +105,14 @@ pub async fn get_group(conn: impl Executor<'_>, group_id: i64) -> Result<Group, 
         group_id,
     )
     .fetch_one(conn)
-    .await?;
+    .await
+    .map_err(|e| match e {
+        sqlx::Error::RowNotFound => Error::NotFound {
+            entity: "group",
+            id: eco_format!("{group_id}"),
+        },
+        _ => Error::DatabaseError(e),
+    })?;
 
     Ok(group)
 }

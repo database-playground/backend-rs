@@ -43,4 +43,7 @@ pub enum Error {
 
     #[error("id must be a positive integer")]
     NotPositiveID,
+
+    #[error("user has been banned or deleted")]
+    UserDeleted,
 }
