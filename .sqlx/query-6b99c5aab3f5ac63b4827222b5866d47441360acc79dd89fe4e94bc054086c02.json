@@ -1,13 +1,10 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO dp_attempt_events (user_id, question_id, query, status)\n        VALUES ($1, $2, $3, $4)\n        ",
+  "query": "\n        UPDATE dp_attempt_events\n        SET status = $1\n        WHERE attempt_event_id = $2\n        ",
   "describe": {
     "columns": [],
     "parameters": {
       "Left": [
-        "Varchar",
-        "Int8",
-        "Text",
         {
           "Custom": {
             "name": "dp_attempt_status",
@@ -19,10 +16,11 @@
               ]
             }
           }
-        }
+        },
+        "Int8"
       ]
     },
     "nullable": []
   },
-  "hash": "28c7cd952957e611b9897e811aaa832c1141dc40e9b6b7267784aa7e7117ceda"
+  "hash": "6b99c5aab3f5ac63b4827222b5866d47441360acc79dd89fe4e94bc054086c02"
 }

@@ -1,0 +1,36 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO dp_attempt_events (user_id, question_id, query, status)\n        VALUES ($1, $2, $3, $4)\n        RETURNING (attempt_event_id)\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "attempt_event_id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Int8",
+        "Text",
+        {
+          "Custom": {
+            "name": "dp_attempt_status",
+            "kind": {
+              "Enum": [
+                "pending",
+                "passed",
+                "failed"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "52864ab9d443aab039001085617b0515766659370188a7d4e60cdd1ef0109301"
+}

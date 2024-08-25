@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO dp_solution_events (user_id, question_id)\n        VALUES ($1, $2)\n        RETURNING (solution_event_id)\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "solution_event_id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "9de94dc1707303b0439252621cc87d09aad20e6453fa2feed8c7b1245b89e4ad"
+}
