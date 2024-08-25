@@ -52,6 +52,7 @@ impl AuthBuilder {
         #[derive(Debug, serde::Deserialize)]
         struct Claim {
             scope: Option<String>,
+            sub: String,
         }
 
         let header = jsonwebtoken::decode_header(&jwt).map_err(AuthError::DecodeJwtHeader)?;
@@ -67,11 +68,15 @@ impl AuthBuilder {
             .map(|v| v.split_ascii_whitespace().map(|s| s.to_string()).collect())
             .unwrap_or_default();
 
-        Ok(Auth { scopes })
+        Ok(Auth {
+            sub: token_data.claims.sub.into(),
+            scopes,
+        })
     }
 }
 
 pub struct Auth {
+    pub sub: EcoString,
     scopes: HashSet<String>,
 }
 
@@ -83,9 +88,14 @@ impl Auth {
 
 pub trait ContextAuthExt {
     fn require_scope(&self, scope: Scope) -> Result<(), async_graphql::Error>;
+    fn sub(&self) -> Option<&str>;
 }
 
 impl ContextAuthExt for Context<'_> {
+    fn sub(&self) -> Option<&str> {
+        self.data::<Auth>().map(|auth| auth.sub.as_str()).ok()
+    }
+
     fn require_scope(&self, scope: Scope) -> Result<(), async_graphql::Error> {
         let Ok(auth) = self.data::<Auth>() else {
             return Err(super::error::Error {
