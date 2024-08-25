@@ -23,7 +23,7 @@ CREATE INDEX dp_attempt_events_user_question_id_idx ON dp_attempt_events (
 
 CREATE TABLE dp_solution_events (
     solution_event_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_id VARCHAR(255) REFERENCES dp_users ON DELETE CASCADE,
+    user_id VARCHAR(255) NOT NULL REFERENCES dp_users ON DELETE CASCADE,
     question_id BIGINT NOT NULL REFERENCES dp_questions ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
