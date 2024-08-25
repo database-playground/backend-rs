@@ -46,6 +46,45 @@ mod test_get_or_initialize_user {
     }
 }
 
+mod test_delete_user {
+    use std::assert_matches::assert_matches;
+
+    use sqlx::PgPool;
+
+    #[sqlx::test(fixtures("group", "user"))]
+    async fn test_delete_user(pool: PgPool) {
+        backend::db::delete_user(&pool, "usergroup1")
+            .await
+            .expect("failed to delete user");
+
+        let user = sqlx::query!(r#"SELECT deleted_at FROM dp_users WHERE user_id = 'usergroup1';"#)
+            .fetch_one(&pool)
+            .await
+            .expect("failed to fetch user");
+        assert!(user.deleted_at.is_some());
+    }
+
+    #[sqlx::test]
+    async fn test_delete_user_not_found(pool: PgPool) {
+        let user = backend::db::delete_user(&pool, "usernotfound0").await;
+
+        assert_matches!(
+            user,
+            Err(backend::db::Error::NotFound {
+                entity: "user",
+                id,
+            }) if id == "usernotfound0"
+        );
+    }
+
+    #[sqlx::test(fixtures("group", "user"))]
+    async fn test_delete_user_deleted(pool: PgPool) {
+        let user = backend::db::delete_user(&pool, "userdeleted0").await;
+
+        assert_matches!(user, Err(backend::db::Error::NotFound { entity: "user", id }) if id == "userdeleted0");
+    }
+}
+
 mod test_create_group {
     use backend::db::GroupCreateParameter;
     use sqlx::PgPool;

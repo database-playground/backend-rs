@@ -54,6 +54,34 @@ pub async fn get_or_initialize_user(conn: impl Acquire<'_>, user_id: &str) -> Re
     Ok(created_user_info)
 }
 
+/// Mark the user as deleted.
+///
+/// You should also remove this user from the authentication service.
+pub async fn delete_user(conn: impl Executor<'_>, user_id: &str) -> Result<(), Error> {
+    tracing::debug!("Deleting user");
+
+    let affected_rows = sqlx::query!(
+        r#"
+        UPDATE dp_users
+        SET deleted_at = now()
+        WHERE user_id = $1 AND deleted_at IS NULL
+        "#,
+        user_id,
+    )
+    .execute(conn)
+    .await?
+    .rows_affected();
+
+    if affected_rows == 0 {
+        return Err(Error::NotFound {
+            entity: "user",
+            id: eco_format!("{user_id}"),
+        });
+    }
+
+    Ok(())
+}
+
 pub struct GroupCreateParameter<'a> {
     pub name: &'a str,
     pub description: Option<&'a str>,
