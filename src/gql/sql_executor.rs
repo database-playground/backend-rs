@@ -47,20 +47,8 @@ impl SqlExecutorMutation {
             })
             .await
             .map_err(|e| match e {
-                _ if e.code() == tonic::Code::InvalidArgument => error::Error {
-                    code: error::ErrorCode::InvalidQuery,
-                    title: EcoString::inline("Invalid query"),
-                    details: e.message().to_string().into(),
-                    error: Some(Box::new(e)),
-                }
-                .to_gql_error(),
-                _ => error::Error {
-                    code: error::ErrorCode::InvalidQuery,
-                    title: EcoString::inline("Internal error"),
-                    details: Cow::Borrowed("Unable to run your query."),
-                    error: Some(Box::new(e)),
-                }
-                .to_gql_error(),
+                _ if e.code() == tonic::Code::InvalidArgument => Error::InvalidQuery(e).into(),
+                _ => Error::RetrieveFailed(e).into(),
             })?;
 
         tracing::debug!(question_id, "Constructing response");
@@ -74,7 +62,7 @@ impl SqlExecutorMutation {
             Some(ResponseType::Error(error)) => {
                 Ok(ExecuteResult::Failed(ExecuteFailedResult { error }))
             }
-            None => Err(invalid_response_type_error()),
+            None => Err(Error::InvalidResponseType.into()),
         }
     }
 }
@@ -105,7 +93,7 @@ impl ExecuteSuccessResult {
                 id: self.user_query_id.clone(),
             })
             .await
-            .map_err(retrieve_query_internal_error)?;
+            .map_err(Error::RetrieveFailed)?;
         let mut query_response_body = query_response.into_inner();
 
         tracing::debug!("Streaming and constructing table");
@@ -116,11 +104,11 @@ impl ExecuteSuccessResult {
             let Some(RetrieveQueryResponse { kind }) = query_response_body
                 .message()
                 .await
-                .map_err(retrieve_query_internal_error)?
+                .map_err(Error::RetrieveFailed)?
             else {
                 break;
             };
-            let kind = kind.ok_or_else(invalid_response_type_error)?;
+            let kind = kind.ok_or_else(Error::InvalidResponseType)?;
 
             match kind {
                 Kind::Header(header) => column = header.cells,
@@ -155,27 +143,11 @@ impl ExecuteSuccessResult {
                 query: answer,
             })
             .await
-            .map_err(|e| {
-                error::Error {
-                    code: error::ErrorCode::InternalError,
-                    title: EcoString::inline("Internal error"),
-                    details: Cow::Borrowed("Unable to check answer."),
-                    error: Some(Box::new(e)),
-                }
-                .to_gql_error()
-            })?;
+            .map_err(Error::RetrieveFailed)?;
         let answer_sql_id = match result.into_inner().response_type {
             Some(ResponseType::Id(user_query_id)) => user_query_id,
-            Some(ResponseType::Error(error)) => {
-                return Err(error::Error {
-                    code: error::ErrorCode::InternalError,
-                    title: EcoString::inline("Internal error"),
-                    details: Cow::Borrowed("Unable to check answer."),
-                    error: Some(Box::new(AnswerExecutionError { error })),
-                }
-                .to_gql_error())
-            }
-            None => return Err(invalid_response_type_error()),
+            Some(ResponseType::Error(error)) => return Err(Error::AnswerInvalid { error }.into()),
+            None => return Err(Error::InvalidResponseType.into()),
         };
 
         tracing::debug!(answer_sql_id, "Comparing results");
@@ -185,7 +157,7 @@ impl ExecuteSuccessResult {
                 right_id: answer_sql_id.clone(),
             })
             .await
-            .map_err(retrieve_query_internal_error)?;
+            .map_err(Error::RetrieveFailed)?;
         let same = comparison_result.into_inner().same;
 
         tracing::debug!(
@@ -198,39 +170,6 @@ impl ExecuteSuccessResult {
     }
 }
 
-fn retrieve_query_internal_error(e: tonic::Status) -> async_graphql::Error {
-    error::Error {
-        code: error::ErrorCode::InternalError,
-        title: EcoString::inline("Internal error"),
-        details: Cow::Borrowed("Unable to retrieve query results."),
-        error: Some(Box::new(e)),
-    }
-    .to_gql_error()
-}
-
-fn invalid_response_type_error() -> async_graphql::Error {
-    error::Error {
-        code: error::ErrorCode::InternalError,
-        title: EcoString::inline("Internal error"),
-        details: Cow::Borrowed("Unknown response type."),
-        error: None,
-    }
-    .to_gql_error()
-}
-
-#[derive(Debug)]
-struct AnswerExecutionError {
-    error: String,
-}
-
-impl std::fmt::Display for AnswerExecutionError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Answer execution failed: {}", self.error)
-    }
-}
-
-impl std::error::Error for AnswerExecutionError {}
-
 #[derive(SimpleObject)]
 pub struct Table {
     pub column: Vec<String>,
@@ -240,4 +179,50 @@ pub struct Table {
 #[derive(SimpleObject)]
 pub struct ExecuteFailedResult {
     pub error: String,
+}
+
+pub enum Error {
+    InvalidQuery(tonic::Status),
+    RetrieveFailed(tonic::Status),
+    InvalidResponseType,
+    DbrunnerUnavailable,
+    AnswerInvalid { error: String },
+}
+
+impl From<Error> for async_graphql::Error {
+    fn from(value: Error) -> Self {
+        match value {
+            Error::InvalidQuery(e) => error::Error {
+                code: error::ErrorCode::InvalidQuery,
+                title: EcoString::inline("Invalid query"),
+                details: e.message().to_string().into(),
+                error: Some(Box::new(e)),
+            },
+            Error::RetrieveFailed(e) => error::Error {
+                code: error::ErrorCode::InternalError,
+                title: EcoString::inline("Internal error"),
+                details: Cow::Borrowed("Unable to retrieve results from dbrunner."),
+                error: Some(Box::new(e)),
+            },
+            Error::InvalidResponseType => error::Error {
+                code: error::ErrorCode::InternalError,
+                title: EcoString::inline("Internal error"),
+                details: Cow::Borrowed("Unknown response type."),
+                error: None,
+            },
+            Error::DbrunnerUnavailable => error::Error {
+                code: error::ErrorCode::InternalError,
+                title: EcoString::inline("Internal error"),
+                details: Cow::Borrowed("Database runner is not available."),
+                error: None,
+            },
+            Error::AnswerInvalid { error } => error::Error {
+                code: error::ErrorCode::InternalError,
+                title: EcoString::inline("Invalid answer"),
+                details: error.into(),
+                error: None,
+            },
+        }
+        .to_gql_error()
+    }
 }
