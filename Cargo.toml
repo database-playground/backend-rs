@@ -64,6 +64,7 @@ seeder = ["dep:include_dir"]
 
 [dev-dependencies]
 uuid = { version = "1.10.0", features = ["v4"] }
+sqlx = { version = "0.8", features = ["migrate"] }
 
 [build-dependencies]
 tonic-build = "0.12.1"
